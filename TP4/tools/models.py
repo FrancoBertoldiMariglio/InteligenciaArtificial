@@ -97,3 +97,16 @@ class InceptionCNN(nn.Module):
         x = torch.sigmoid(x)
 
         return x
+
+
+class DenseNet_121CNN(nn.Module):
+    def __init__(self):
+        super(DenseNet_121CNN, self).__init__()
+        self.base_model = models.densenet121(pretrained=True)
+        self.base_model.classifier = nn.Linear(self.base_model.classifier.in_features, 1)
+
+    def forward(self, x):
+        x = self.base_model(x)
+        x = torch.sigmoid(x)
+
+        return x

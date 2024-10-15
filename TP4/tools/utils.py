@@ -130,7 +130,6 @@ def calculate_metrics(y_true, y_pred, y_proba_flat):
         y_proba_flat = y_proba_flat[:, :, 1].flatten()
 
     accuracy = accuracy_score(y_true, y_pred)
-    conf_matrix = confusion_matrix(y_true, y_pred)
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
     specificity = recall_score(y_true, y_pred, pos_label=0)
@@ -138,16 +137,4 @@ def calculate_metrics(y_true, y_pred, y_proba_flat):
     fpr, tpr, _ = roc_curve(y_true, y_proba_flat)
     roc_auc = auc(fpr, tpr)
 
-    roc_data = [[x, y] for (x, y) in zip(fpr, tpr)]
-    table = wandb.Table(data=roc_data, columns=["FPR", "TPR"])
-    wandb.log({
-        "test_accuracy": accuracy,
-        "test_precision": precision,
-        "test_recall": recall,
-        "test_specificity": specificity,
-        "test_confusion_matrix": wandb.plot.confusion_matrix(y_true=y_true.flatten().tolist(), preds=y_pred.flatten().tolist(), class_names=["Clase 0", "Clase 1"]),
-        "ROC Curve": wandb.plot.line(table, "FPR", "TPR", title="ROC Curve"),
-        "test_roc_auc": roc_auc,
-    })
-
-    return accuracy, precision, recall, specificity, conf_matrix, fpr, tpr, roc_auc
+    return accuracy, precision, recall, specificity, fpr, tpr, roc_auc
