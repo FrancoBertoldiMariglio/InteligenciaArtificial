@@ -2,14 +2,19 @@ import torch
 import wandb
 import json
 import os
-from utils import train_and_validate, test, classify, calculate_metrics
+from tools.utils import train_and_validate, test, classify, calculate_metrics
 
 
 def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, criterion, optimizer, num_epochs=15):
 
-    model_name = model.__class__.__name__
+    model_name: str = model.__class__.__name__
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Para Linux y Windows
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Para MacOS
+
+    device = torch.device("mps" if torch.mps.is_available() else "cpu")
 
     wandb.init(project="CNN_CatsvsDogs", entity="ar-um", tags=["BERTOLDI_MANCUSO"], name="Bertoldi_Mancuso_" + model_name)
     wandb.config.update(exp_config)
@@ -21,11 +26,11 @@ def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, cr
     exp_config['num_epochs'] = num_epochs
     exp_config['early_stopping_patience'] = early_stopping_patience
 
-    base_checkpoint_path = './TP4/checkpoints'
+    base_checkpoint_path = '../checkpoints'
 
     os.makedirs(base_checkpoint_path, exist_ok=True)
 
-    checkpoint_path = base_checkpoint_path + '/best_model' + model + '.pth'
+    checkpoint_path = base_checkpoint_path + '/best_model' + model_name + '.pth'
 
     train_and_validate(model, train_dataloader, val_dataloader, criterion, optimizer, device,
                        num_epochs, early_stopping_patience, checkpoint_path)
@@ -60,7 +65,7 @@ def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, cr
     print(f"Recall: {recall:.2f}")
     print(f"Specificity: {specificity:.2f}")
 
-    dicts_path = './TP4/dicts'
+    dicts_path = '../dicts'
     os.makedirs(dicts_path, exist_ok=True)
     with open(dicts_path + '/exp_config' + model_name + '.json', 'w') as json_file:
         json.dump(exp_config, json_file, indent=4)

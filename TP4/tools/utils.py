@@ -12,7 +12,6 @@ def train(model, train_dataloader, criterion, optimizer, device):
     total = 0
 
     for images, labels in train_dataloader:
-        print(f" SHAPE: {images.shape}")
         images, labels = images.to(device), labels.to(device)
 
         optimizer.zero_grad()
