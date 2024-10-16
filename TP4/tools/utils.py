@@ -64,6 +64,7 @@ def validate(model, val_dataloader, criterion, device):
 
 def train_and_validate(model, train_dataloader, val_dataloader, criterion, optimizer, device, num_epochs,
                        early_stopping_patience, checkpoint_path):
+
     epochs_without_improvement = 0
     best_val_loss = 5
 
