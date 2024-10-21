@@ -2,22 +2,14 @@ import torch
 import wandb
 import json
 import os
-from tools.utils import train_and_validate, test, classify, calculate_metrics
+import numpy as np
+from tools.utils import train_and_validate, test, classify, calculate_metrics, convert_to_serializable
 
+def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, criterion, optimizer, model_name, num_epochs=15):
 
-def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, criterion, optimizer, num_epochs=15):
-
-    model_name: str = model.__class__.__name__
-
-    # Para Linux y Windows
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Para MacOS
-
-    device = torch.device("mps" if torch.mps.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     wandb.init(project="CNN_CatsvsDogs", entity="ar-um", tags=["BERTOLDI_MANCUSO"], name="Bertoldi_Mancuso_" + model_name)
-    wandb.config.update(exp_config)
 
     model = model.to(device)
     exp_config['model'] = model_name
@@ -26,7 +18,9 @@ def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, cr
     exp_config['num_epochs'] = num_epochs
     exp_config['early_stopping_patience'] = early_stopping_patience
 
-    base_checkpoint_path = '../checkpoints'
+    wandb.config.update(exp_config)
+
+    base_checkpoint_path = './checkpoints'
 
     os.makedirs(base_checkpoint_path, exist_ok=True)
 
@@ -41,8 +35,7 @@ def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, cr
 
     y_true, y_pred, y_proba_flat = classify(y_proba, y_true)
 
-    accuracy, precision, recall, specificity, conf_matrix, fpr, tpr, roc_auc = calculate_metrics(y_true, y_pred,
-                                                                                                 y_proba_flat)
+    accuracy, precision, recall, specificity, fpr, tpr, roc_auc = calculate_metrics(y_true, y_pred, y_proba_flat)
 
     roc_data = [[x, y] for (x, y) in zip(fpr, tpr)]
     table = wandb.Table(data=roc_data, columns=["FPR", "TPR"])
@@ -65,11 +58,21 @@ def run(exp_config, train_dataloader, val_dataloader, test_dataloader, model, cr
     print(f"Recall: {recall:.2f}")
     print(f"Specificity: {specificity:.2f}")
 
-    dicts_path = '../dicts'
-    os.makedirs(dicts_path, exist_ok=True)
-    with open(dicts_path + '/exp_config' + model_name + '.json', 'w') as json_file:
-        json.dump(exp_config, json_file, indent=4)
-
     wandb.finish()
+
+    serializable_exp_config = exp_config
+
+    if isinstance(exp_config, np.int64):
+        serializable_exp_config = int(exp_config)
+    elif isinstance(exp_config, tuple):
+        serializable_exp_config = tuple(int(x) if isinstance(x, np.int64) else x for x in exp_config)
+    elif isinstance(exp_config, dict):
+        serializable_exp_config = {key: int(value) if isinstance(value, np.int64) else value for key, value in exp_config.items()}
+
+    dicts_path = os.path.join('./dicts')
+    os.makedirs(dicts_path, exist_ok=True)
+
+    with open(os.path.join(dicts_path, f'exp_config{model_name}.json'), 'w') as json_file:
+        json.dump(serializable_exp_config, json_file, indent=4)
 
     return exp_config

@@ -50,7 +50,6 @@ class ResNet18(nn.Module):
 class AdvancedCNN(nn.Module):
     def __init__(self):
         super(AdvancedCNN, self).__init__()
-
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(32)
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
@@ -68,9 +67,14 @@ class AdvancedCNN(nn.Module):
         self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
 
         self.flatten = nn.Flatten()
+
         self.fc1 = nn.Linear(256 * 14 * 14, 512)
-        self.dropout = nn.Dropout(0.5)
-        self.fc2 = nn.Linear(512, 1)
+        self.dropout1 = nn.Dropout(0.5)
+
+        self.fc2 = nn.Linear(512, 128)
+        self.dropout2 = nn.Dropout(0.5)
+
+        self.fc3 = nn.Linear(128, 1)
 
     def forward(self, x):
         x = self.pool1(F.relu(self.bn1(self.conv1(x))))
@@ -81,8 +85,15 @@ class AdvancedCNN(nn.Module):
         x = self.flatten(x)
 
         x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = torch.sigmoid(self.fc2(x))
+        x = self.dropout1(x)
+
+        x = F.relu(self.fc2(x))
+        x = self.dropout2(x)
+
+        x = torch.sigmoid(self.fc3(x))
+
+        return x
+
 
 
 class InceptionCNN(nn.Module):
@@ -109,4 +120,16 @@ class DenseNet_121CNN(nn.Module):
         x = self.base_model(x)
         x = torch.sigmoid(x)
 
+        return x
+
+
+class MobileNetCNN(nn.Module):
+    def __init__(self):
+        super(MobileNetCNN, self).__init__()
+        self.base_model = models.mobilenet_v2(weights='MobileNet_V2_Weights.IMAGENET1K_V1')
+        self.base_model.classifier[1] = nn.Linear(self.base_model.classifier[1].in_features, 1)
+
+    def forward(self, x):
+        x = self.base_model(x)
+        x = torch.sigmoid(x)
         return x

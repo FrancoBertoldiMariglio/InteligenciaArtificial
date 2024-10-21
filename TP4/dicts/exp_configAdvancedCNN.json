@@ -1,0 +1,23 @@
+{
+    "seed": 42,
+    "test_size": 0.15,
+    "val_size": 0.2,
+    "train_n_cats": 7984,
+    "train_n_dogs": 7934,
+    "val_n_cats": 1996,
+    "val_n_dogs": 1984,
+    "test_n_cats": 1761,
+    "test_n_dogs": 1751,
+    "input_size": [
+        224,
+        224
+    ],
+    "n_channels": 3,
+    "batch_size": 64,
+    "criterion": "BCELoss",
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "model": "AdvancedCNN",
+    "num_epochs": 15,
+    "early_stopping_patience": 5
+}

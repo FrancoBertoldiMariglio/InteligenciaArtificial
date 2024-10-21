@@ -1,5 +1,8 @@
+import os
+
 import torch
 import wandb
+import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc, precision_score, recall_score
 
 
@@ -138,3 +141,13 @@ def calculate_metrics(y_true, y_pred, y_proba_flat):
     roc_auc = auc(fpr, tpr)
 
     return accuracy, precision, recall, specificity, fpr, tpr, roc_auc
+
+
+def convert_to_serializable(obj):
+    if isinstance(obj, np.int64):
+        return int(obj)
+    elif isinstance(obj, tuple):
+        return tuple(convert_to_serializable(x) for x in obj)
+    elif isinstance(obj, dict):
+        return {key: convert_to_serializable(value) for key, value in obj.items()}
+    return obj
